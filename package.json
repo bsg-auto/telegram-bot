@@ -8,9 +8,16 @@
     "url": "https://github.com/bsg-auto/telegram-bot"
   },
   "scripts": {
+    "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "S. Mahdi Mir-Ismaili <s.m.mirismaili@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.40.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.7.1"
+  }
 }
