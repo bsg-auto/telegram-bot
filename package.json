@@ -15,7 +15,7 @@
   "author": "S. Mahdi Mir-Ismaili <s.m.mirismaili@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "node-telegram-bot-api": "^0.40.0"
+    "telegraf": "^3.36.0"
   },
   "devDependencies": {
     "@types/node": "^13.7.1"
