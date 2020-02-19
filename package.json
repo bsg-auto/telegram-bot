@@ -15,6 +15,11 @@
   "author": "S. Mahdi Mir-Ismaili <s.m.mirismaili@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs-node": "^1.5.2",
+    "aes-js": "^3.1.2",
+    "axios": "^0.19.2",
+    "jimp": "^0.9.3",
+    "mongoose": "^5.9.1",
     "telegraf": "^3.36.0"
   },
   "devDependencies": {

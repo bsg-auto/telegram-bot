@@ -1,11 +1,22 @@
 /* global require, process */
 
-const http = require('http')
 const Telegraf = require('telegraf')
-
+const Extra = require('telegraf/extra')
+const Markup = require('telegraf/markup')
+const session = require('telegraf/session')
+const Stage = require('telegraf/stage')
+const Scene = require('telegraf/scenes/base')
 const {
 	getExternalIP,
 } = require('./utils')
+const {
+	WELCOME_MESSAGE,
+} = require('./constants')
+
+const {
+	dbConnectionPromise,
+	TgUser,
+} = require('./prepareDB')
 
 /**
  * Created on 1398/11/24 (2020/2/13).
@@ -14,59 +25,101 @@ const {
 'use strict'
 const env = process.env
 
-getExternalIP().then(console.log.bind(console,'Public IP:')).catch(console.error.bind(console))
+getExternalIP().then(console.log.bind(console, 'Public IP:')).catch(console.error.bind(console))
 
 const PORT = env.PORT || 6000
 
-http.createServer((req, res) => {
-	console.log(req.url)
-	return res.end('Hello world!')
-}).listen(PORT)
-console.log(`Listening on port ${PORT} ...`)
+// http.createServer((req, res) => {
+// 	console.log(req.url)
+// 	return res.end('Hello world!')
+// }).listen(PORT)
+// console.log(`Listening on port ${PORT} ...`)
 //***********************************************************************************************************/
 
-const bot = new Telegraf(env.TELEGRAM_API_KEY)
-bot.catch((err, ctx) => console.log(`Ooops! The bot encountered an error for ${ctx.updateType}`, err))
-
+// const bot = new Telegraf(env.BOT_TOKEN)
+// bot.catch((err, ctx) => console.log(`Ooops! The bot encountered an error for ${ctx.updateType}`, err))
+//
+// // Register session middleware
+// bot.use(session())
+//
+// // Register logger middleware
 // bot.use((ctx, next) => {
-// 	next()
-// 	console.log('ctx.telegram', ctx.telegram)
-// 	console.log('ctx.updateType', ctx.updateType)
-// 	console.log('ctx.updateSubTypes', ctx.updateSubTypes)
-// 	console.log('ctx.message', ctx.message)
-// 	console.log('ctx.editedMessage', ctx.editedMessage)
-// 	console.log('ctx.inlineQuery', ctx.inlineQuery)
-// 	console.log('ctx.chosenInlineResult', ctx.chosenInlineResult)
-// 	console.log('ctx.callbackQuery', ctx.callbackQuery)
-// 	console.log('ctx.shippingQuery', ctx.shippingQuery)
-// 	console.log('ctx.preCheckoutQuery', ctx.preCheckoutQuery)
-// 	console.log('ctx.channelPost', ctx.channelPost)
-// 	console.log('ctx.editedChannelPost', ctx.editedChannelPost)
-// 	console.log('ctx.poll', ctx.poll)
-// 	console.log('ctx.pollAnswer', ctx.pollAnswer)
-// 	console.log('ctx.chat', ctx.chat)
-// 	console.log('ctx.from', ctx.from)
-// 	console.log('ctx.match', ctx.match)
-// 	console.log('ctx.webhookReply', ctx.webhookReply)
+// 	const startTime = new Date()
+// 	return next().then(() => {
+// 		const ms = new Date() - startTime
+// 		console.log('response time %sms', ms)
+// 	})
 // })
 
-const welcomeMessage = `سلام✋
-به ربات #پاسخگویی_خودکار به پرسش‌های باشگاه کارگزاری آگاه خوش‌آمدید. 🌷
-اگر هنوز کد بورسی ندارید یا دارید ولی توی #آگاه نیستید، ما با توجه به مقایسه‌ای که بین کارگزاری‌های مختلف انجام داده‌ایم، این کارگزاری رو به عنوان #کارگزاری_برتر به شما پیشنهاد می‌کنیم.
-می‌تونید همین الان از طریق لینک زیر وارد بشید و ثبت‌نام اینترنتی‌تونو تکمیل کنید.
-توجه داشته باشید که این لینک، یک #لینک_معرفی هست و شما با استفاده از اون، علاوه بر #دریافت_امتیاز، تا یک ماه از امتیازات سطح معرف خود که شامل #۱۷درصد_تخفیف_کارمزد_معاملات و #مزایای_دیگه-ست بهره‌مند می‌شید!`
-bot.start(ctx => ctx.reply(welcomeMessage))
-bot.help(ctx => ctx.reply('Send me a sticker'))
-bot.on('sticker', ctx => ctx.reply('👍'))
-bot.hears('hi', ctx => ctx.reply('Hey there'))
 
-bot.use(async (ctx, next) => {
-	const start = new Date()
-	await next()
-	const ms = new Date() - start
-	console.log('Response time: %sms', ms)
+const keyboard = Markup.inlineKeyboard([
+	Markup.urlButton('❤️', 'http://telegraf.js.org'),
+	Markup.callbackButton('Delete', 'delete')
+])
+
+// Handler factoriess
+const {enter, leave} = Stage
+
+// Create scene manager
+const stage = new Stage()
+stage.command('cancel', leave())
+
+// Scene registration
+const {
+	UsernameScene,
+	PasswordScene,
+} = require('./scenes/greeter')
+
+stage.register(
+		new UsernameScene(),
+		new PasswordScene(),
+)
+
+const bot = new Telegraf(process.env.BOT_TOKEN)
+
+bot.use(session())
+bot.use(stage.middleware())
+
+bot.use(async (ctx, next) => { console.log('x')
+	if (ctx.session.started) return next()
+	
+	ctx.session.started = true
+	const telegramInfo = ctx.from
+	
+	const tgUserPromise = TgUser.findOneAndUpdate({id: telegramInfo.id}, telegramInfo, {upsert: true, new: true})
+	tgUserPromise.then(tgUser => {
+		console.log('Upserted:', tgUser)
+		ctx.session.tgUserId = tgUser._id
+	}).catch(console.error.bind(console, 'Upsert Error:'))
+	
+	next().then(async () => await tgUserPromise)
+	// console.log('ctx.telegram', ctx.telegram)
+	// console.log('ctx.message', ctx.message)
+	// console.log('ctx.chat', ctx.chat)
+	// console.log('ctx.from', ctx.from)
+	// console.log('ctx.updateType', ctx.updateType)
+	// console.log('ctx.updateSubTypes', ctx.updateSubTypes)
+	// console.log('ctx.editedMessage', ctx.editedMessage)
+	// console.log('ctx.inlineQuery', ctx.inlineQuery)
+	// console.log('ctx.chosenInlineResult', ctx.chosenInlineResult)
+	// console.log('ctx.callbackQuery', ctx.callbackQuery)
+	// console.log('ctx.shippingQuery', ctx.shippingQuery)
+	// console.log('ctx.preCheckoutQuery', ctx.preCheckoutQuery)
+	// console.log('ctx.channelPost', ctx.channelPost)
+	// console.log('ctx.editedChannelPost', ctx.editedChannelPost)
+	// console.log('ctx.poll', ctx.poll)
+	// console.log('ctx.pollAnswer', ctx.pollAnswer)
+	// console.log('ctx.match', ctx.match)
+	// console.log('ctx.webhookReply', ctx.webhookReply)
 })
 
-bot.on('text', (ctx) => ctx.reply('Hello World'))
+bot.start(ctx => ctx.scene.enter('username'))
 
-bot.launch()
+dbConnectionPromise.then(async () =>
+		await bot.launch(env.REMOTE_HOST && {
+			webhook: {
+				domain: 'https://' + env.REMOTE_HOST,
+				port: PORT
+			}
+		})
+).catch(console.error.bind(console, 'DB connection error:'))
