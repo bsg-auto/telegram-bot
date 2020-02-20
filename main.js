@@ -113,7 +113,12 @@ bot.use(async (ctx, next) => { console.log('x')
 	// console.log('ctx.webhookReply', ctx.webhookReply)
 })
 
+//bot.on('message', ctx => console.log('state', ctx.scene.state))
 bot.start(ctx => ctx.scene.enter('username'))
+
+bot.command(['q', 'questions'], ctx => {
+
+})
 
 dbConnectionPromise.then(async () =>
 		await bot.launch(env.REMOTE_HOST && {

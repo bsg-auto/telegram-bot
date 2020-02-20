@@ -1,8 +1,6 @@
-const Scene = require('telegraf/scenes/base')
-const Stage = require('telegraf/stage')
-
 const {
 	AesEncryption,
+	randomStr10,
 } = require('../utils')
 const {
 	verifyCredential,
@@ -11,6 +9,9 @@ const {
 	AgahUser,
 	TgUser,
 } = require('../prepareDB')
+const {
+	BaseScene,
+} = require('./base-scene')
 
 /**
  * Created on 1398/11/25 (2020/2/14).
@@ -20,37 +21,9 @@ const {
 
 const env = process.env
 
-const aes = new AesEncryption(Buffer.from(env.AES_KEY, 'hex'), 7)
+const aes = new AesEncryption(Buffer.from(env.AES_KEY, 'hex'))
 
 //*******************************************************************************/
-
-class BaseScene extends Scene {
-	constructor(name) {
-		super(name)
-		this.name = name
-		
-		this.enter(this.onEnter.bind(this))
-		this.leave(this.onLeave.bind(this))
-		this.on('text', (ctx, next) => this.onText.bind(this)(ctx.message.text, ctx, next))
-		
-		for (const onHear of this.getOnHears()) this.hears(onHear.message, onHear.callback)
-	}
-	
-	onEnter(ctx, next) {
-		console.log('Entered scene:', this.name)
-	}
-	
-	onLeave(ctx, next) {
-		console.log('Left scene:', this.name)
-	}
-	
-	getOnHears() {
-		return []
-	}
-	
-	onText(text, ctx, next) {
-	}
-}
 
 class PasswordScene extends BaseScene {
 	PLEASE_ENTER_PASSWORD = `رمز عبور خود را در <a href="https://bashgah.com/#!/login">سایت بآشگاه</a> وارد کنید:\n
@@ -98,14 +71,18 @@ class PasswordScene extends BaseScene {
 		console.log('New correct credential:', username)
 		
 		const telegramInfo = ctx.from
+		const subSalt = randomStr10()
+		const salt = subSalt + username
+		const encryptedPassword = Buffer.from(aes.encrypt(salt + password))
 		
 		const newUserData = {
-			name: bashgahInfo.bashgah.user.customerTitle,
+			name: bashgahInfo.user.customerTitle,
 			username,
+			encryptedPassword,
+			subSalt,
 			passwordIsValid: true,
 			$addToSet: {tgUsers: ctx.session.tgUserId},
-			encryptedPassword: Buffer.from(aes.encrypt(password)),
-			...bashgahInfo,
+			bashgah: bashgahInfo,
 		}
 		
 		AgahUser.findOneAndUpdate({username}, newUserData, {upsert: true, new: true}).then(agahUser =>
@@ -114,8 +91,8 @@ class PasswordScene extends BaseScene {
 					ctx.reply('تبریک 🌹\n به جمع کاربران ما خوش آمدید 💐').then()
 					ctx.replyWithSticker('CAACAgQAAxkBAAPDXk1_P2rpYOGDJdWPwBklruV40SMAAuMAA_NilgYrEJPrbrOoTBgE').then()
 					ctx.scene.leave()
-				}).catch(console.error.bind(console, 'Upsert2 Error:'))
-						.catch(console.error.bind(console, 'Upsert1 Error:')))
+				}))
+				.catch(console.error.bind(console, 'Upsert1 Error:'))
 	}
 }
 

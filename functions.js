@@ -79,20 +79,7 @@ const verifyCredential = async (username, password) => {
 		Password: password,
 		CaptchaCode: answer,
 	}, {
-		headers: {
-			// 'Host': 'bashgah.com',
-			// 'Connection': 'keep-alive',
-			// 'Accept': 'application/json, text/plain, */*',
-			// 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
-			// 'Content-Type': 'application/json;charset=UTF-8',
-			// 'Origin': 'https://bashgah.com',
-			// 'Sec-Fetch-Site': 'same-origin',
-			// 'Sec-Fetch-Mode': 'cors',
-			// 'Referer': 'https://bashgah.com/',
-			// 'Accept-Encoding': 'gzip, deflate, br',
-			// 'Accept-Language': 'en-US,en;q=0.9,fa;q=0.8',
-			'Cookie': stringifyCookies(setCookiesToCookies(cookies)),
-		},
+		headers: {'Cookie': stringifyCookies(setCookiesToCookies(cookies))},
 	})
 	
 	console.log(response.status, '/', response.statusText)
@@ -108,9 +95,11 @@ const verifyCredential = async (username, password) => {
 				return response.data.error
 		}
 	
-	const bashgahInfo = {bashgah: response.data.Entity}
-	const date = bashgahInfo.bashgah.user.aggreeToDepositMoneyDate
-	bashgahInfo.bashgah.user.aggreeToDepositMoneyDate = date.substring(6, date.length - 2)  // convert "/Date(###)/" to "###"
+	const bashgahInfo = response.data.Entity
+	
+	// Corrections:
+	const date = bashgahInfo.user.aggreeToDepositMoneyDate
+	bashgahInfo.user.aggreeToDepositMoneyDate = date.substring(6, date.length - 2)  // convert "/Date(###)/" to "###"
 
 	return {bashgahInfo}
 }

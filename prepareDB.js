@@ -34,6 +34,7 @@ const AgahUserSchema = new Schema({
 	name: {type: String, index: true},
 	username: {type: String, unique: true},
 	encryptedPassword: Buffer, //{type: Buffer, required: true, default: null},
+	subSalt: {type: String, required: true, default: null},
 	passwordIsValid: {type: Boolean, required: true, default: true},
 	bashgah: {
 		firstLoginState: Boolean,
