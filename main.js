@@ -5,13 +5,12 @@ const Extra = require('telegraf/extra')
 const Markup = require('telegraf/markup')
 const session = require('telegraf/session')
 const Stage = require('telegraf/stage')
-const Scene = require('telegraf/scenes/base')
 const {
 	getExternalIP,
 } = require('./utils')
 const {
 	WELCOME_MESSAGE,
-} = require('./constants')
+} = require('./values')
 
 const {
 	dbConnectionPromise,
@@ -51,7 +50,6 @@ const PORT = env.PORT || 6000
 // 	})
 // })
 
-
 const keyboard = Markup.inlineKeyboard([
 	Markup.urlButton('❤️', 'http://telegraf.js.org'),
 	Markup.callbackButton('Delete', 'delete')
@@ -69,10 +67,12 @@ const {
 	UsernameScene,
 	PasswordScene,
 } = require('./scenes/greeter')
+const {QuestionsScene} = require('./scenes/questions')
 
 stage.register(
 		new UsernameScene(),
 		new PasswordScene(),
+		new QuestionsScene(),
 )
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
@@ -113,11 +113,14 @@ bot.use(async (ctx, next) => { console.log('x')
 	// console.log('ctx.webhookReply', ctx.webhookReply)
 })
 
-//bot.on('message', ctx => console.log('state', ctx.scene.state))
+bot.on('message', (ctx, next) => {
+	console.log('state', ctx.scene.state)
+	next()
+})
 bot.start(ctx => ctx.scene.enter('username'))
 
 bot.command(['q', 'questions'], ctx => {
-
+	ctx.scene.enter('questions')
 })
 
 dbConnectionPromise.then(async () =>

@@ -120,7 +120,6 @@ class UsernameScene extends BaseScene {
 	}
 }
 
-
 module.exports = {
 	UsernameScene,
 	PasswordScene,

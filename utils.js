@@ -104,6 +104,13 @@ const getExternalIP = () => new Promise((resolve, reject) =>
 		}).on('error', reject)
 )
 
+/**
+ * convert `"/Date(###)/"` to `"###"`
+ * @param date Matched in `/\/Date\(\d+\)\//`
+ * @returns {number}
+ */
+const jsonDateToUnixTimestamp = date => parseInt(date.substring(6, date.length - 2))
+
 module.exports = {
 	parseSetCookies,
 	setCookiesToCookies,
@@ -114,4 +121,5 @@ module.exports = {
 	AesEncryption,
 	getExternalIP,
 	randomStr10,
+	jsonDateToUnixTimestamp,
 }

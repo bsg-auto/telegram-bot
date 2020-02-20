@@ -10,8 +10,10 @@ const {
 	setCookiesToCookies,
 	stringifyCookies,
 	combineColors,
+	jsonDateToUnixTimestamp,
 } = require('./utils')
 const {
+	BASE_URL,
 	NUM_DIGITS_PER_IMAGE,
 	DIGIT_WIDTH,
 	DIGIT_HEIGHT,
@@ -33,7 +35,7 @@ const modelPromise = tf.loadLayersModel('file://./trained-models/bashgah-captcha
 
 const verifyCredential = async (username, password) => {
 	const axios = Axios.create({
-		baseURL: 'https://bashgah.com',
+		baseURL: BASE_URL,
 		timeout: 15000,
 		maxRedirects: 0,
 		withCredentials: true,
@@ -98,8 +100,7 @@ const verifyCredential = async (username, password) => {
 	const bashgahInfo = response.data.Entity
 	
 	// Corrections:
-	const date = bashgahInfo.user.aggreeToDepositMoneyDate
-	bashgahInfo.user.aggreeToDepositMoneyDate = date.substring(6, date.length - 2)  // convert "/Date(###)/" to "###"
+	bashgahInfo.user.aggreeToDepositMoneyDate = jsonDateToUnixTimestamp(bashgahInfo.user.aggreeToDepositMoneyDate)
 
 	return {bashgahInfo}
 }
@@ -152,6 +153,49 @@ const getImagesDataset = rawData => {
 	return imagesDataset
 }
 
+const resolveActiveCompetitions = async () => {
+	const axios = Axios.create({
+		baseURL: BASE_URL,
+		timeout: 15000,
+		maxRedirects: 0,
+	})
+	
+	const {data} = await axios.get('/Competition/GetQuestions', {
+		params: {
+			type: 1,        // Active competitions
+			pageNumber: 1,
+		}
+	})
+	
+	// noinspection JSUnresolvedVariable
+	return data.data.list.DataList.map(({Question}) => ({
+		code: parseInt(Question.SerialNumber),
+		id: Question.Id,
+		score: Question.Score,
+		title: Question.Title,
+		body: Question.QuestionBody,
+		bodyClearText: Question.QuestionBodyClearText,
+		deadlineTime: jsonDateToUnixTimestamp(Question.DeadLineDate),
+		deadlineTimeS: `${Question.DeadLineDateString} تا ساعت ${Question.DeadLineHours}`,
+		publishDate: jsonDateToUnixTimestamp(Question.PublishDate),
+		publishDateS: Question.PublishDateString,
+		maker: Question.Maker,
+		createDate: jsonDateToUnixTimestamp(Question.CreateDate),
+		answerType: Question.AnswerType,
+		type: Question.Type,
+		isBourse: Question.IsBourse,
+		categoryId: Question.CategoryId,
+		categoryS: Question.Category,
+		pictureBase64: Question.PictureBase64,
+		pictureThumbnailBase64: Question.PictureThumbnailBase64,
+		options: Question.Options.map(option => ({
+			id: option.Id,
+			body: option.Body,
+		})),
+	}))
+}
+
 module.exports = {
 	verifyCredential,
+	resolveActiveCompetitions,
 }
