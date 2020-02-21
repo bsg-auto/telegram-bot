@@ -1,4 +1,5 @@
 const tf = require('@tensorflow/tfjs-node')
+const puppeteer = require('puppeteer')
 const Jimp = require('jimp')
 const Axios = require('axios').default
 const {
@@ -101,7 +102,7 @@ const verifyCredential = async (username, password) => {
 	
 	// Corrections:
 	bashgahInfo.user.aggreeToDepositMoneyDate = jsonDateToUnixTimestamp(bashgahInfo.user.aggreeToDepositMoneyDate)
-
+	
 	return {bashgahInfo}
 }
 
@@ -195,7 +196,69 @@ const resolveActiveCompetitions = async () => {
 	}))
 }
 
+const resolveCompetition = async (questionCode) => {
+	const browser = await puppeteer.launch({
+		// headless: false,
+		//devtools: true,
+		// slowMo : 500,
+		defaultViewport: {
+			width: 720,
+			height: 1200,
+			isMobile: true,
+			deviceScaleFactor: 1,
+		}
+	})
+	
+	let page = null
+	
+	try {
+		page = await browser.newPage() //await browser.targets()[0].page()
+		
+		const url = `${BASE_URL}/Question/${questionCode}`
+		console.log(url)
+		
+		page.goto(url).then().catch(error => {
+			if (error.message === 'Navigation failed because browser has disconnected!') return   // not important
+			console.error(error)
+		})
+		
+		const div = await page.waitForSelector('#view-container > div.container.ng-scope')
+		console.log('5')
+		
+		await Promise.all(
+				[
+					'#header3',
+					'#view-container > div.container.ng-scope > div.form-body div.col-md-4:not(.ng-hide)',  // جدول تعداد شرکت‌کنندگان بر اساس سطح
+					'#view-container > div.container.ng-scope > div.form-footer',                           // گزینه‌ها («ارسال پاسخ»، ...)
+					'#view-container > div.container.ng-scope > div.form-header > span:nth-child(2)',       // بخش «طراح سؤال: ...»
+				].map(extraPart =>
+						page.$eval(extraPart, el => el.remove()).then()
+								.catch(() => console.error(`Couldn't find and remove: "${extraPart}"`))
+				)
+		)
+		
+		const image = await div.screenshot()
+		
+		console.log('6')
+		
+		page.close().then(() => {
+			browser.close().then(() => console.log('8'))
+			return console.log('7')
+		})
+		
+		return image
+	} catch (e) {
+		console.error(e.name === 'TimeoutError' ? e.name : e)
+		return null
+	} finally {
+		try {
+			if (page !== null) page.close().then().catch()
+		} catch (e) {}
+	}
+}
+
 module.exports = {
 	verifyCredential,
 	resolveActiveCompetitions,
+	resolveCompetition,
 }

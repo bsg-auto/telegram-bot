@@ -12,6 +12,20 @@ const {
 	WELCOME_MESSAGE,
 } = require('./values')
 
+const number = 123456.789;
+
+console.log(new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(number));
+// expected output: "123.456,79 €"
+
+// the Japanese yen doesn't use a minor unit
+console.log(new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(number));
+// expected output: "￥123,457"
+
+// limit to three significant digits
+console.log(new Intl.NumberFormat('fa-IR').format(number));
+console.log(new Intl.NumberFormat('fa-IR', { maximumSignificantDigits: 3 }).format(number));
+console.log(new Intl.NumberFormat('fa-IR', { maximumSignificantDigits: 3 }).format(number).charCodeAt(0));
+
 const {
 	dbConnectionPromise,
 	TgUser,
@@ -88,7 +102,7 @@ bot.use(async (ctx, next) => { console.log('x')
 	
 	const tgUserPromise = TgUser.findOneAndUpdate({id: telegramInfo.id}, telegramInfo, {upsert: true, new: true})
 	tgUserPromise.then(tgUser => {
-		console.log('Upserted:', tgUser)
+		//console.log('Upserted:', tgUser)
 		ctx.session.tgUserId = tgUser._id
 	}).catch(console.error.bind(console, 'Upsert Error:'))
 	
