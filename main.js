@@ -1,5 +1,5 @@
 /* global require, process */
-
+// require('./intl')
 const Telegraf = require('telegraf')
 const Extra = require('telegraf/extra')
 const Markup = require('telegraf/markup')
@@ -11,20 +11,6 @@ const {
 const {
 	WELCOME_MESSAGE,
 } = require('./values')
-
-const number = 123456.789;
-
-console.log(new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(number));
-// expected output: "123.456,79 €"
-
-// the Japanese yen doesn't use a minor unit
-console.log(new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(number));
-// expected output: "￥123,457"
-
-// limit to three significant digits
-console.log(new Intl.NumberFormat('fa-IR').format(number));
-console.log(new Intl.NumberFormat('fa-IR', { maximumSignificantDigits: 3 }).format(number));
-console.log(new Intl.NumberFormat('fa-IR', { maximumSignificantDigits: 3 }).format(number).charCodeAt(0));
 
 const {
 	dbConnectionPromise,
@@ -94,7 +80,8 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(session())
 bot.use(stage.middleware())
 
-bot.use(async (ctx, next) => { console.log('x')
+bot.use(async (ctx, next) => {
+	console.log('x')
 	if (ctx.session.started) return next()
 	
 	ctx.session.started = true

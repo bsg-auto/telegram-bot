@@ -62,11 +62,13 @@ class QuestionsScene extends BaseScene {
 							
 							const options = competition.options.map(option => option.body)
 							const qBody = competition.body.replace(/<\s*?p.*?>|<\s*?\/p\s*?>/ig, '')  // Remove "<p>"s and "</p>"s
-							console.log(competition.body)
-							console.log(qBody)
+							
+							const fa = new Intl.NumberFormat('fa-IR', {useGrouping: false})
+							const qCodeFa = fa.format(competition.code)
+							const scoreFa = fa.format(competition.score)
 							
 							const caption = outdent`
-								${'سؤال ' + competition.code + ' (' +  competition.score + ' امتیازی):'}\n
+								${'سؤال ' + qCodeFa + ' (' +  scoreFa + ' امتیازی):'}\n
 								${qBody}\n
 								۱- ${options[0]}\n
 								۲- ${options[1]}\n
