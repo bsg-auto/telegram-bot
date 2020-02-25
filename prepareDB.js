@@ -37,7 +37,9 @@ const collectionSchemas = {
 		encryptedPassword: Buffer, //{type: Buffer, required: true, default: null},
 		subSalt: {type: String, required: true, default: null},
 		passwordIsValid: {type: Boolean, required: true, default: true},
+		isActive: {type: Boolean, required: true, default: true},
 		bashgah: {
+			autoAnswer: {type: Boolean, required: true, default: false},
 			firstLoginState: Boolean,
 			isMergeWindowVisibleForNewCustomer: Boolean,
 			user: {
@@ -70,7 +72,7 @@ const collectionSchemas = {
 	},
 	
 	AgahCompetition: {
-		code: {type: String, required: true, unique: true},
+		code: {type: Number, required: true, unique: true},
 		id: {type: String, required: true, unique: true},
 		score: {type: Number, required: true, default: null},
 		title: String,

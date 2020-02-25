@@ -111,6 +111,28 @@ const getExternalIP = () => new Promise((resolve, reject) =>
  */
 const jsonDateToUnixTimestamp = date => parseInt(date.substring(6, date.length - 2))
 
+const deepGet = function(...deepPath) {
+	let obj = this
+	for (const e of deepPath) {
+		const nextObj = obj[e]
+		if (nextObj === undefined) return
+		obj = nextObj
+	}
+	return obj
+}
+const getOrDefineDeepPath = function (...deepPath) {
+	let obj = this
+	for (let [i, e] of deepPath.entries()) {
+		let nextObj = obj[e]
+		if (nextObj === undefined) {
+			for (const l = deepPath.length - 1; i < l; i++) obj = obj[deepPath[i]] = {}
+			return obj[deepPath[i]]
+		}
+		obj = nextObj
+	}
+	return obj
+}
+
 module.exports = {
 	parseSetCookies,
 	setCookiesToCookies,
@@ -122,4 +144,6 @@ module.exports = {
 	getExternalIP,
 	randomStr10,
 	jsonDateToUnixTimestamp,
+	deepGet,
+	getOrDefineDeepPath,
 }

@@ -44,12 +44,16 @@ class PasswordScene extends BaseScene {
 	async onText(text, ctx) {
 		ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).then()
 		
-		const username = ctx.session.username
-		const password = ctx.session.password = text
+		const session = ctx.session
+		
+		const username = session.username
+		const password = session.password = text
 		
 		// Exactly before 'لطفاً صبر کنید ...':
-		ctx.telegram.deleteMessage(ctx.session.requestUsernameMessage.chat.id, ctx.session.requestUsernameMessage.message_id).then()
-		ctx.telegram.deleteMessage(ctx.session.requestPasswordMessage.chat.id, ctx.session.requestPasswordMessage.message_id).then()
+		// console.log(session.requestUsernameMessage)  // temporary removed until solving this issue: https://github.com/telegraf/telegraf/issues/917#issuecomment-590959722
+		console.log(session.requestPasswordMessage)
+		ctx.telegram.deleteMessage(session.requestUsernameMessage.chat.id, session.requestUsernameMessage.message_id).then()
+		ctx.telegram.deleteMessage(session.requestPasswordMessage.chat.id, session.requestPasswordMessage.message_id).then()
 		
 		let result
 		try {
@@ -75,13 +79,15 @@ class PasswordScene extends BaseScene {
 		const salt = subSalt + username
 		const encryptedPassword = Buffer.from(aes.encrypt(salt + password))
 		
+		bashgahInfo.autoAnswer = false
 		const newUserData = {
 			name: bashgahInfo.user.customerTitle,
 			username,
 			encryptedPassword,
 			subSalt,
 			passwordIsValid: true,
-			$addToSet: {tgUsers: ctx.session.tgUserId},
+			isActive: true,
+			$addToSet: {tgUsers: session.tgUserId},
 			bashgah: bashgahInfo,
 		}
 		
@@ -92,7 +98,7 @@ class PasswordScene extends BaseScene {
 					ctx.replyWithSticker('CAACAgQAAxkBAAPDXk1_P2rpYOGDJdWPwBklruV40SMAAuMAA_NilgYrEJPrbrOoTBgE').then()
 					ctx.scene.leave()
 				}))
-				.catch(console.error.bind(console, 'Upsert1 Error:'))
+				.catch(console.error.bind(console, 'Upsert Error:'))
 	}
 }
 

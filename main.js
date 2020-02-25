@@ -5,12 +5,8 @@ const Extra = require('telegraf/extra')
 const Markup = require('telegraf/markup')
 const session = require('telegraf/session')
 const Stage = require('telegraf/stage')
-const {
-	getExternalIP,
-} = require('./utils')
-const {
-	WELCOME_MESSAGE,
-} = require('./values')
+const {getExternalIP} = require('./utils')
+const {WELCOME_MESSAGE} = require('./values')
 
 const {
 	dbConnectionPromise,
@@ -55,7 +51,7 @@ const keyboard = Markup.inlineKeyboard([
 	Markup.callbackButton('Delete', 'delete')
 ])
 
-// Handler factoriess
+// Handler factories
 const {enter, leave} = Stage
 
 // Create scene manager
@@ -128,7 +124,9 @@ dbConnectionPromise.then(async () =>
 		await bot.launch(env.REMOTE_HOST && {
 			webhook: {
 				domain: 'https://' + env.REMOTE_HOST,
-				port: PORT
+				port: PORT,
 			}
+		}).then(() => {
+			console.log(new Date().toLocaleString('en-ZA-u-ca-persian') + ':', 'Bot started as', bot.options.username)
 		})
 ).catch(console.error.bind(console, 'DB connection error:'))

@@ -1,11 +1,6 @@
 const tf = require('@tensorflow/tfjs-node')
-const puppeteer = require('puppeteer')
 const Jimp = require('jimp')
 const Axios = require('axios').default
-const {
-	dbConnectionPromise,
-	User,
-} = require('./prepareDB')
 const {
 	parseSetCookies,
 	setCookiesToCookies,
@@ -14,7 +9,7 @@ const {
 	jsonDateToUnixTimestamp,
 } = require('./utils')
 const {
-	BASE_URL,
+	BASHGAH_ORIGIN,
 	NUM_DIGITS_PER_IMAGE,
 	DIGIT_WIDTH,
 	DIGIT_HEIGHT,
@@ -31,18 +26,29 @@ const {
  */
 'use strict'
 
+const env = process.env
+//**********************************************************************/
+
+const axios = Axios.create({
+	baseURL: BASHGAH_ORIGIN,
+	timeout: 30000,
+	maxRedirects: 0,
+})
+//**********************************************************************/
+
 let model = null
 const modelPromise = tf.loadLayersModel('file://./trained-models/bashgah-captcha@1398-11-17@10073.json')
+modelPromise.then().catch(err => {
+	console.error(err)
+	process.exit(1)
+})
+//**********************************************************************/
 
 const verifyCredential = async (username, password) => {
-	const axios = Axios.create({
-		baseURL: BASE_URL,
-		timeout: 15000,
-		maxRedirects: 0,
+	let response = await axios.get(`/Account/CaptchaImage?id=${Date.now()}`, {
 		withCredentials: true,
+		responseType: 'stream',
 	})
-	
-	let response = await axios.get(`/Account/CaptchaImage?id=${Date.now()}`, {responseType: 'stream'})
 	
 	console.log(response.status, response.statusText)
 	//console.log(response.headers)
@@ -155,12 +161,6 @@ const getImagesDataset = rawData => {
 }
 
 const resolveActiveCompetitions = async () => {
-	const axios = Axios.create({
-		baseURL: BASE_URL,
-		timeout: 15000,
-		maxRedirects: 0,
-	})
-	
 	const {data} = await axios.get('/Competition/GetQuestions', {
 		params: {
 			type: 1,        // Active competitions
@@ -196,64 +196,27 @@ const resolveActiveCompetitions = async () => {
 	}))
 }
 
-const resolveCompetition = async (questionCode) => {
-	const browser = await puppeteer.launch({
-		// headless: false,
-		//devtools: true,
-		// slowMo : 500,
-		defaultViewport: {
-			width: 720,
-			height: 1200,
-			isMobile: true,
-			deviceScaleFactor: 1,
-		}
-	})
-	
-	let page = null
+const resolveCompetition = async (competitionCode) => {
+	const url = env.PUPPETEER_SERVICE_ORIGIN + '/bashgah-competition-photo'
+	console.log(url)
 	
 	try {
-		page = await browser.newPage() //await browser.targets()[0].page()
-		
-		const url = `${BASE_URL}/Question/${questionCode}`
-		console.log(url)
-		
-		page.goto(url).then().catch(error => {
-			if (error.message === 'Navigation failed because browser has disconnected!') return   // not important
-			console.error(error)
-		})
-		
-		const div = await page.waitForSelector('#view-container > div.container.ng-scope')
-		console.log('5')
-		
-		await Promise.all(
-				[
-					'#header3',
-					'#view-container > div.container.ng-scope > div.form-body div.col-md-4:not(.ng-hide)',  // جدول تعداد شرکت‌کنندگان بر اساس سطح
-					'#view-container > div.container.ng-scope > div.form-footer',                           // گزینه‌ها («ارسال پاسخ»، ...)
-					'#view-container > div.container.ng-scope > div.form-header > span:nth-child(2)',       // بخش «طراح سؤال: ...»
-				].map(extraPart =>
-						page.$eval(extraPart, el => el.remove()).then()
-								.catch(() => console.error(`Couldn't find and remove: "${extraPart}"`))
-				)
-		)
-		
-		const image = await div.screenshot()
-		
-		console.log('6')
-		
-		page.close().then(() => {
-			browser.close().then(() => console.log('8'))
-			return console.log('7')
-		})
-		
-		return image
+		return (await axios.post(url, {
+			//baseURL: env.PUPPETEER_SERVICE_ORIGIN,
+			competitionCode,
+			viewport: {
+				width: 720,
+				height: 1200,
+				isMobile: true,
+				deviceScaleFactor: 1.5,
+			}
+		}, {
+			responseType: 'arraybuffer',
+			headers: {Authorization: `Bearer ${env.PUPPETEER_SERVICE_BEARER_KEY}`},
+		})).data
 	} catch (e) {
-		console.error(e.name === 'TimeoutError' ? e.name : e)
+		console.error(e)
 		return null
-	} finally {
-		try {
-			if (page !== null) page.close().then().catch()
-		} catch (e) {}
 	}
 }
 

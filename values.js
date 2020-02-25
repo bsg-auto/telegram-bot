@@ -23,11 +23,11 @@ const WELCOME_MESSAGE = `سلام✋
 می‌تونید همین الان از طریق لینک زیر وارد بشید و ثبت‌نام اینترنتی‌تونو تکمیل کنید.
 توجه داشته باشید که این لینک، یک #لینک_معرفی هست و شما با استفاده از اون، علاوه بر #دریافت_امتیاز، تا یک ماه از امتیازات سطح معرف خود که شامل #۱۷درصد_تخفیف_کارمزد_معاملات و #مزایای_دیگه-ست بهره‌مند می‌شید!`
 
-const BASE_URL = 'https://bashgah.com'
+const BASHGAH_ORIGIN = 'https://bashgah.com'
 
 module.exports = {
 	WELCOME_MESSAGE,
-	BASE_URL,
+	BASHGAH_ORIGIN,
 	
 	IMAGE_WIDTH,
 	IMAGE_HEIGHT,

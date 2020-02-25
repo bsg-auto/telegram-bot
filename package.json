@@ -22,8 +22,8 @@
     "jimp": "^0.9.3",
     "mongoose": "^5.9.1",
     "outdent": "^0.7.0",
-    "puppeteer": "2.1.1",
-    "telegraf": "^3.36.0"
+    "telegraf": "^3.36.0",
+    "telegraf-inline-menu": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^13.7.1"
